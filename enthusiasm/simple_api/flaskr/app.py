@@ -79,7 +79,7 @@ def deblur():
     file_format = str(payload[0]).lower()[2:-1]
     image_data = b'!'.join(payload[1:])
     img = Image.open(io.BytesIO(image_data))
-    img = img.convert("L")
+    img = img.filter(ImageFilter.SHARPEN)
     buff = io.BytesIO()
     img.save(buff, format="JPEG" if file_format.upper() == "JPG" else file_format.upper())
     result_bytes = buff.getvalue()
@@ -91,12 +91,14 @@ def deblur():
 def crop():
     json_data = request.get_json()
     payload = bytes(json_data["payload"], "ascii")
+    bbox = json_data["bbox"]
+    print(bbox)
     payload = base64.b64decode(payload)
     payload = payload.split(b'!')
     file_format = str(payload[0]).lower()[2:-1]
     image_data = b'!'.join(payload[1:])
     img = Image.open(io.BytesIO(image_data))
-    img = img.convert("L")
+    img = img.crop(bbox)
     buff = io.BytesIO()
     img.save(buff, format="JPEG" if file_format.upper() == "JPG" else file_format.upper())
     result_bytes = buff.getvalue()
@@ -104,16 +106,17 @@ def crop():
     return {"payload": encoded_result}
     
 
-@app.route("/flip", methods={"POST"})
+@app.route("/rotate", methods={"POST"})
 def flip():
     json_data = request.get_json()
     payload = bytes(json_data["payload"], "ascii")
+    rotate_angle = json_data["angle"]
     payload = base64.b64decode(payload)
     payload = payload.split(b'!')
     file_format = str(payload[0]).lower()[2:-1]
     image_data = b'!'.join(payload[1:])
     img = Image.open(io.BytesIO(image_data))
-    img = img.convert("L")
+    img = img.rotate(rotate_angle, expand=True)
     buff = io.BytesIO()
     img.save(buff, format="JPEG" if file_format.upper() == "JPG" else file_format.upper())
     result_bytes = buff.getvalue()
